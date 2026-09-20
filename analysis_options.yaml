@@ -1,0 +1,9 @@
+# This file configures the analyzer, which statically checks Dart code for errors.
+# Pub packages and Flutter package-specific restrictions are enabled in this file.
+
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    prefer_const_constructors: true
+    prefer_const_literals_to_create_immutables: true
