@@ -81,7 +81,8 @@ void main() {
   ) async {
     await tester.pumpWidget(
       UScreenerNotesApp(
-        nowProvider: () => DateTime(2026, 2, 3, 12, 0),
+        nowProvider: () => DateTime.utc(2026, 2, 3, 12, 0),
+        displayTimeMapper: _asUtc,
       ),
     );
 
@@ -92,3 +93,5 @@ void main() {
     expect(firstTitle.data, 'AAPL pullback watch');
   });
 }
+
+DateTime _asUtc(DateTime value) => value.toUtc();

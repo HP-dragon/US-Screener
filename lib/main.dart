@@ -7,9 +7,14 @@ void main() {
 }
 
 class UScreenerNotesApp extends StatelessWidget {
-  const UScreenerNotesApp({super.key, this.nowProvider = DateTime.now});
+  const UScreenerNotesApp({
+    super.key,
+    this.nowProvider = DateTime.now,
+    this.displayTimeMapper = _toLocalTime,
+  });
 
   final DateTime Function() nowProvider;
+  final DateTime Function(DateTime value) displayTimeMapper;
 
   @override
   Widget build(BuildContext context) {
@@ -20,15 +25,23 @@ class UScreenerNotesApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
       ),
-      home: NotesHomeScreen(nowProvider: nowProvider),
+      home: NotesHomeScreen(
+        nowProvider: nowProvider,
+        displayTimeMapper: displayTimeMapper,
+      ),
     );
   }
 }
 
 class NotesHomeScreen extends StatefulWidget {
-  const NotesHomeScreen({super.key, this.nowProvider = DateTime.now});
+  const NotesHomeScreen({
+    super.key,
+    this.nowProvider = DateTime.now,
+    this.displayTimeMapper = _toLocalTime,
+  });
 
   final DateTime Function() nowProvider;
+  final DateTime Function(DateTime value) displayTimeMapper;
 
   @override
   State<NotesHomeScreen> createState() => _NotesHomeScreenState();
@@ -131,6 +144,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
             children: [
               TextField(
                 key: const Key('searchField'),
+                textInputAction: TextInputAction.search,
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.search),
                   labelText: 'Search notes',
@@ -178,7 +192,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      'Updated ${_formatDateTime(note.updatedAt)}',
+                                      'Updated ${_formatDateTime(note.updatedAt, widget.displayTimeMapper)}',
                                       style: Theme.of(context).textTheme.bodySmall,
                                     ),
                                   ],
@@ -419,14 +433,16 @@ class _EditorResult {
 
 enum _EditorAction { save, delete }
 
-String _formatDateTime(DateTime value) {
-  final normalized = value.toLocal();
+String _formatDateTime(DateTime value, DateTime Function(DateTime value) mapper) {
+  final normalized = mapper(value);
   final month = normalized.month.toString().padLeft(2, '0');
   final day = normalized.day.toString().padLeft(2, '0');
   final hour = normalized.hour.toString().padLeft(2, '0');
   final minute = normalized.minute.toString().padLeft(2, '0');
   return '$month/$day ${hour}:$minute';
 }
+
+DateTime _toLocalTime(DateTime value) => value.toLocal();
 
 List<StockNote> _sampleNotes(DateTime now) {
   final normalizedNow = now.toUtc();
