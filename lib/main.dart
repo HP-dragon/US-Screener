@@ -55,7 +55,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _notes = _sampleNotes(widget.nowProvider());
+    _notes = _sampleNotes();
     _nextLocalId = _notes.length;
   }
 
@@ -444,8 +444,8 @@ String _formatDateTime(DateTime value, DateTime Function(DateTime value) mapper)
 
 DateTime _toLocalTime(DateTime value) => value.toLocal();
 
-List<StockNote> _sampleNotes(DateTime now) {
-  final normalizedNow = now.toUtc();
+List<StockNote> _sampleNotes() {
+  const normalizedNow = DateTime.utc(2026, 2, 3, 12, 0);
   return [
     StockNote(
       id: 'aapl',

@@ -81,7 +81,6 @@ void main() {
   ) async {
     await tester.pumpWidget(
       UScreenerNotesApp(
-        nowProvider: () => DateTime.utc(2026, 2, 3, 12, 0),
         displayTimeMapper: _asUtc,
       ),
     );
