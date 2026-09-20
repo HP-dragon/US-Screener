@@ -20,8 +20,12 @@ void main() {
       PopupMenuItem<MainMenuAction>,
       'Screener',
     );
+    final screenerMenuEntry = find.descendant(
+      of: screenerMenuItem,
+      matching: find.text('Screener'),
+    );
 
-    await tester.tap(screenerMenuItem);
+    await tester.tap(screenerMenuEntry);
     await tester.pumpAndSettle();
 
     expect(find.text('Daftar notes saham US'), findsOneWidget);
