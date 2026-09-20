@@ -1,232 +1,244 @@
 import 'package:flutter/material.dart';
 
+import 'models/stock_note.dart';
+
 void main() {
-  runApp(const UScreenerApp());
+  runApp(const UScreenerNotesApp());
 }
 
-class UScreenerApp extends StatelessWidget {
-  const UScreenerApp({super.key});
+class UScreenerNotesApp extends StatelessWidget {
+  const UScreenerNotesApp({
+    super.key,
+    this.nowProvider = DateTime.now,
+    this.displayTimeMapper = _toLocalTime,
+  });
+
+  final DateTime Function() nowProvider;
+  final DateTime Function(DateTime value) displayTimeMapper;
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'US Screener',
+      title: 'US Screener Notes',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      home: NotesHomeScreen(
+        nowProvider: nowProvider,
+        displayTimeMapper: displayTimeMapper,
+      ),
     );
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class NotesHomeScreen extends StatefulWidget {
+  const NotesHomeScreen({
+    super.key,
+    this.nowProvider = DateTime.now,
+    this.displayTimeMapper = _toLocalTime,
+  });
+
+  final DateTime Function() nowProvider;
+  final DateTime Function(DateTime value) displayTimeMapper;
+
+  @override
+  State<NotesHomeScreen> createState() => _NotesHomeScreenState();
+}
+
+class _NotesHomeScreenState extends State<NotesHomeScreen> {
+  late final List<StockNote> _notes;
+  int _nextLocalId = 0;
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _notes = _sampleNotes();
+    _nextLocalId = _notes.length;
+  }
+
+  List<StockNote> get _filteredNotes {
+    final normalizedQuery = _query.trim().toLowerCase();
+    final source = [..._notes]..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+    if (normalizedQuery.isEmpty) {
+      return source;
+    }
+
+    return source.where((note) {
+      final searchable = [note.title, note.ticker, note.content].join(' ').toLowerCase();
+      return searchable.contains(normalizedQuery);
+    }).toList();
+  }
+
+  Future<void> _createNote() async {
+    final result = await Navigator.of(context).push<_EditorResult>(
+      MaterialPageRoute(
+        builder: (_) => const NoteEditorScreen(),
+      ),
+    );
+
+    if (!mounted || result == null || result.action != _EditorAction.save) {
+      return;
+    }
+
+    setState(() {
+      final now = widget.nowProvider().toUtc();
+      _notes.add(
+        StockNote(
+          id: 'local-${now.microsecondsSinceEpoch}-${_nextLocalId++}',
+          title: result.title,
+          ticker: result.ticker,
+          content: result.content,
+          updatedAt: now,
+        ),
+      );
+    });
+  }
+
+  Future<void> _editNote(StockNote note) async {
+    final result = await Navigator.of(context).push<_EditorResult>(
+      MaterialPageRoute(
+        builder: (_) => NoteEditorScreen(note: note),
+      ),
+    );
+
+    if (!mounted || result == null) {
+      return;
+    }
+
+    setState(() {
+      if (result.action == _EditorAction.delete) {
+        _notes.removeWhere((item) => item.id == note.id);
+        return;
+      }
+
+      if (result.action == _EditorAction.save) {
+        final index = _notes.indexWhere((item) => item.id == note.id);
+        if (index != -1) {
+          _notes[index] = _notes[index].copyWith(
+            title: result.title,
+            ticker: result.ticker,
+            content: result.content,
+            updatedAt: widget.nowProvider().toUtc(),
+          );
+        }
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final metrics = [
-      _MetricCard(label: 'Applicants', value: '1,284', color: Colors.indigo),
-      _MetricCard(label: 'Shortlisted', value: '412', color: Colors.green),
-      _MetricCard(label: 'Interview', value: '118', color: Colors.orange),
-      _MetricCard(label: 'Hired', value: '36', color: Colors.teal),
-    ];
-
-    final actions = [
-      _ActionButton(icon: Icons.list_alt_rounded, label: 'Applicants'),
-      _ActionButton(icon: Icons.filter_alt_rounded, label: 'Filters'),
-      _ActionButton(icon: Icons.analytics_rounded, label: 'Reports'),
-      _ActionButton(icon: Icons.settings_rounded, label: 'Settings'),
-    ];
+    final filtered = _filteredNotes;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
-        title: const Text('US Screener'),
-        centerTitle: false,
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none_rounded),
-          ),
-        ],
+        title: const Text('US Screener Notes'),
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            const Text(
-              'Recruitment overview',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              TextField(
+                key: const Key('searchField'),
+                textInputAction: TextInputAction.search,
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search),
+                  labelText: 'Search notes',
+                  hintText: 'Title, ticker, or analysis text',
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    _query = value;
+                  });
+                },
               ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Track applicant quality, review progress, and manage screening tasks.',
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.grey.shade700,
-              ),
-            ),
-            const SizedBox(height: 20),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 1.45,
-              children: metrics,
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Quick actions',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 4,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              children: actions,
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text(
-                        'Recent applicants',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: filtered.isEmpty
+                    ? _EmptyState(hasQuery: _query.trim().isNotEmpty)
+                    : ListView.separated(
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final note = filtered[index];
+                          return Card(
+                            child: ListTile(
+                              onTap: () => _editNote(note),
+                              title: Text(note.title.isEmpty ? 'Untitled note' : note.title),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    if (note.ticker.isNotEmpty)
+                                      Text(
+                                        note.ticker,
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.primary,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      note.content.isEmpty ? 'No analysis yet.' : note.content,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Updated ${_formatDateTime(note.updatedAt, widget.displayTimeMapper)}',
+                                      style: Theme.of(context).textTheme.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                      Text(
-                        'View all',
-                        style: TextStyle(
-                          color: Colors.indigo,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _ApplicantRow(name: 'Alya N.', role: 'Product Designer', stage: 'Interview'),
-                  const Divider(),
-                  _ApplicantRow(name: 'Rian H.', role: 'Frontend Engineer', stage: 'Shortlist'),
-                  const Divider(),
-                  _ApplicantRow(name: 'Sita M.', role: 'QA Analyst', stage: 'Applied'),
-                ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('New review'),
+        onPressed: _createNote,
+        icon: const Icon(Icons.add),
+        label: const Text('New note'),
       ),
     );
   }
 }
 
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({required this.hasQuery});
 
-  final String label;
-  final String value;
-  final Color color;
+  final bool hasQuery;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(18),
-      ),
+    return Center(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.insights_rounded, color: color),
-          const SizedBox(height: 12),
+          const Icon(Icons.sticky_note_2_outlined, size: 56),
+          const SizedBox(height: 8),
           Text(
-            value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            hasQuery ? 'No matching notes found' : 'No notes yet',
+            style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 4),
           Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.indigo),
-          const SizedBox(height: 8),
-          Text(
-            label,
+            hasQuery
+                ? 'Try another keyword for title, ticker, or content.'
+                : 'Tap New note to start your US stock analysis.',
             textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -234,71 +246,227 @@ class _ActionButton extends StatelessWidget {
   }
 }
 
-class _ApplicantRow extends StatelessWidget {
-  const _ApplicantRow({
-    required this.name,
-    required this.role,
-    required this.stage,
-  });
+class NoteEditorScreen extends StatefulWidget {
+  const NoteEditorScreen({super.key, this.note});
 
-  final String name;
-  final String role;
-  final String stage;
+  final StockNote? note;
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: Colors.indigo.shade100,
-            child: Text(
-              name.split(' ').map((part) => part[0]).take(2).join(),
-              style: const TextStyle(
-                color: Colors.indigo,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+  State<NoteEditorScreen> createState() => _NoteEditorScreenState();
+}
+
+class _NoteEditorScreenState extends State<NoteEditorScreen> {
+  late final TextEditingController _titleController;
+  late final TextEditingController _tickerController;
+  late final TextEditingController _contentController;
+
+  bool get _isEditing => widget.note != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.note?.title ?? '');
+    _tickerController = TextEditingController(text: widget.note?.ticker ?? '');
+    _contentController = TextEditingController(text: widget.note?.content ?? '');
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _tickerController.dispose();
+    _contentController.dispose();
+    super.dispose();
+  }
+
+  void _save() {
+    final title = _titleController.text.trim();
+    final ticker = _tickerController.text.trim().toUpperCase();
+    final content = _contentController.text.trim();
+
+    if (title.isEmpty && content.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Title or note content is required.')),
+      );
+      return;
+    }
+
+    final persistedTitle = title.isEmpty ? 'Untitled note' : title;
+
+    Navigator.of(context).pop(
+      _EditorResult(
+        action: _EditorAction.save,
+        title: persistedTitle,
+        ticker: ticker,
+        content: content,
+      ),
+    );
+  }
+
+  Future<void> _delete() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete note?'),
+        content: const Text('This note will be removed from local app state.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  role,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              stage,
-              style: const TextStyle(
-                color: Colors.green,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Delete'),
           ),
         ],
       ),
     );
+
+    if (confirmed == true && mounted) {
+      Navigator.of(context).pop(
+        const _EditorResult(
+          action: _EditorAction.delete,
+          title: '',
+          ticker: '',
+          content: '',
+        ),
+      );
+    }
   }
+
+  void _cancel() {
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(_isEditing ? 'Edit note' : 'New note'),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              TextField(
+                key: const Key('titleField'),
+                controller: _titleController,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: const InputDecoration(
+                  labelText: 'Title',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                key: const Key('tickerField'),
+                controller: _tickerController,
+                textCapitalization: TextCapitalization.characters,
+                decoration: const InputDecoration(
+                  labelText: 'US ticker (e.g. AAPL)',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: TextField(
+                  key: const Key('contentField'),
+                  controller: _contentController,
+                  textCapitalization: TextCapitalization.sentences,
+                  expands: true,
+                  maxLines: null,
+                  minLines: null,
+                  decoration: const InputDecoration(
+                    alignLabelWithHint: true,
+                    labelText: 'Analysis notes',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton.icon(
+                      onPressed: _save,
+                      icon: const Icon(Icons.save),
+                      label: const Text('Save'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _isEditing
+                        ? OutlinedButton.icon(
+                            onPressed: _delete,
+                            icon: const Icon(Icons.delete_outline),
+                            label: const Text('Delete'),
+                          )
+                        : OutlinedButton.icon(
+                            onPressed: _cancel,
+                            icon: const Icon(Icons.close),
+                            label: const Text('Cancel'),
+                          ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EditorResult {
+  const _EditorResult({
+    required this.action,
+    required this.title,
+    required this.ticker,
+    required this.content,
+  });
+
+  final _EditorAction action;
+  final String title;
+  final String ticker;
+  final String content;
+}
+
+enum _EditorAction { save, delete }
+
+String _formatDateTime(DateTime value, DateTime Function(DateTime value) mapper) {
+  final normalized = mapper(value);
+  final month = normalized.month.toString().padLeft(2, '0');
+  final day = normalized.day.toString().padLeft(2, '0');
+  final hour = normalized.hour.toString().padLeft(2, '0');
+  final minute = normalized.minute.toString().padLeft(2, '0');
+  return '$month/$day ${hour}:$minute';
+}
+
+DateTime _toLocalTime(DateTime value) => value.toLocal();
+
+List<StockNote> _sampleNotes() {
+  const normalizedNow = DateTime.utc(2026, 2, 3, 12, 0);
+  return [
+    StockNote(
+      id: 'aapl',
+      title: 'AAPL pullback watch',
+      ticker: 'AAPL',
+      content: 'Monitor support around 20-day MA and watch iPhone demand signals.',
+      updatedAt: normalizedNow.subtract(const Duration(hours: 2)),
+    ),
+    StockNote(
+      id: 'nvda',
+      title: 'NVDA earnings setup',
+      ticker: 'NVDA',
+      content: 'Track data center guidance and margin commentary before adding size.',
+      updatedAt: normalizedNow.subtract(const Duration(hours: 5)),
+    ),
+    StockNote(
+      id: 'msft',
+      title: 'MSFT cloud momentum',
+      ticker: 'MSFT',
+      content: 'Validate Azure growth trend and AI monetization updates from management.',
+      updatedAt: normalizedNow.subtract(const Duration(days: 1)),
+    ),
+  ];
 }
