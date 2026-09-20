@@ -276,10 +276,12 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
       return;
     }
 
+    final persistedTitle = title.isEmpty ? 'Untitled note' : title;
+
     Navigator.of(context).pop(
       _EditorResult(
         action: _EditorAction.save,
-        title: title,
+        title: persistedTitle,
         ticker: ticker,
         content: content,
       ),
