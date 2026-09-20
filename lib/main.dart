@@ -36,12 +36,14 @@ class NotesHomeScreen extends StatefulWidget {
 
 class _NotesHomeScreenState extends State<NotesHomeScreen> {
   late final List<StockNote> _notes;
+  int _nextLocalId = 0;
   String _query = '';
 
   @override
   void initState() {
     super.initState();
     _notes = _sampleNotes(widget.nowProvider());
+    _nextLocalId = _notes.length;
   }
 
   List<StockNote> get _filteredNotes {
@@ -70,13 +72,14 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
     }
 
     setState(() {
+      final now = widget.nowProvider();
       _notes.add(
         StockNote(
-          id: DateTime.now().microsecondsSinceEpoch.toString(),
+          id: 'local-${now.microsecondsSinceEpoch}-${_nextLocalId++}',
           title: result.title,
           ticker: result.ticker,
           content: result.content,
-          updatedAt: widget.nowProvider(),
+          updatedAt: now,
         ),
       );
     });
@@ -420,7 +423,7 @@ String _formatDateTime(DateTime value) {
   final day = local.day.toString().padLeft(2, '0');
   final hour = local.hour.toString().padLeft(2, '0');
   final minute = local.minute.toString().padLeft(2, '0');
-  return '$day/$month ${hour}:$minute';
+  return '$month/$day ${hour}:$minute';
 }
 
 List<StockNote> _sampleNotes(DateTime now) {
