@@ -7,7 +7,9 @@ void main() {
 }
 
 class UScreenerNotesApp extends StatelessWidget {
-  const UScreenerNotesApp({super.key});
+  const UScreenerNotesApp({super.key, this.nowProvider = DateTime.now});
+
+  final DateTime Function() nowProvider;
 
   @override
   Widget build(BuildContext context) {
@@ -18,13 +20,15 @@ class UScreenerNotesApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
       ),
-      home: const NotesHomeScreen(),
+      home: NotesHomeScreen(nowProvider: nowProvider),
     );
   }
 }
 
 class NotesHomeScreen extends StatefulWidget {
-  const NotesHomeScreen({super.key});
+  const NotesHomeScreen({super.key, this.nowProvider = DateTime.now});
+
+  final DateTime Function() nowProvider;
 
   @override
   State<NotesHomeScreen> createState() => _NotesHomeScreenState();
@@ -37,7 +41,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _notes = _sampleNotes();
+    _notes = _sampleNotes(widget.nowProvider());
   }
 
   List<StockNote> get _filteredNotes {
@@ -72,7 +76,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
           title: result.title,
           ticker: result.ticker,
           content: result.content,
-          updatedAt: DateTime.now(),
+          updatedAt: widget.nowProvider(),
         ),
       );
     });
@@ -102,7 +106,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
             title: result.title,
             ticker: result.ticker,
             content: result.content,
-            updatedAt: DateTime.now(),
+            updatedAt: widget.nowProvider(),
           );
         }
       }
@@ -311,7 +315,7 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
   }
 
   void _cancel() {
-    Navigator.of(context).maybePop();
+    Navigator.of(context).pop();
   }
 
   @override
@@ -419,8 +423,7 @@ String _formatDateTime(DateTime value) {
   return '$day/$month ${hour}:$minute';
 }
 
-List<StockNote> _sampleNotes() {
-  final now = DateTime.now();
+List<StockNote> _sampleNotes(DateTime now) {
   return [
     StockNote(
       id: 'aapl',

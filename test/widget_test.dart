@@ -47,4 +47,20 @@ void main() {
     expect(find.text('MSFT cloud momentum'), findsOneWidget);
     expect(find.text('NVDA earnings setup'), findsNothing);
   });
+
+  testWidgets('sample notes render deterministic updated time and sorted order', (
+    WidgetTester tester,
+  ) async {
+    await tester.pumpWidget(
+      UScreenerNotesApp(
+        nowProvider: () => DateTime(2026, 1, 1, 12, 0),
+      ),
+    );
+
+    expect(find.text('Updated 01/01 10:00'), findsOneWidget);
+
+    final tiles = tester.widgetList<ListTile>(find.byType(ListTile)).toList();
+    final firstTitle = tiles.first.title as Text;
+    expect(firstTitle.data, 'AAPL pullback watch');
+  });
 }
