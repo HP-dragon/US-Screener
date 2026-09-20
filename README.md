@@ -1,15 +1,18 @@
-# US Screener
+# US Screener Notes
 
-A Flutter app prototype for managing recruitment/screening workflows.
+A Flutter Material 3 app for drafting and managing US stock screener analysis notes.
 
-## Project goal
+## Current scope (phase 1)
 
-This project is a starting point for an app that can be expanded into a complete recruiter or applicant screening tool compatible with web, Android, Windows, and later iOS.
+- Notes list focused on US stocks (sample notes: AAPL, NVDA, MSFT)
+- Create, edit, save, search, and delete notes
+- Local in-memory state only (no market API yet)
+- Responsive layout suitable for Flutter Web/Chrome and expandable to Android, Windows, and iOS
 
 ## Run locally
 
 1. Install Flutter.
-2. Open the project folder.
+2. Open this project folder.
 3. Run:
 
 ```bash
@@ -17,20 +20,14 @@ flutter pub get
 flutter run -d chrome
 ```
 
-For Android debug build:
+If Chrome device is unavailable:
 
 ```bash
-flutter run -d android
+flutter run -d web-server
 ```
 
-For release web build:
+## Test
 
 ```bash
-flutter build web
+flutter test
 ```
-
-## Folder structure
-
-- `lib/` — app source code
-- `test/` — widget tests
-- `pubspec.yaml` — Flutter project configuration
