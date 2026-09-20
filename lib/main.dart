@@ -205,16 +205,13 @@ class ScreenerScreen extends StatelessWidget {
           builder: (context, constraints) {
             final wideLayout = constraints.maxWidth >= 900;
             final content = wideLayout
-                ? SizedBox(
-                    width: constraints.maxWidth,
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: sections[0]),
-                        const SizedBox(width: 16),
-                        Expanded(child: sections[1]),
-                      ],
-                    ),
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: sections[0]),
+                      const SizedBox(width: 16),
+                      Expanded(child: sections[1]),
+                    ],
                   )
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -227,7 +224,10 @@ class ScreenerScreen extends StatelessWidget {
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: content,
+              child: SizedBox(
+                width: constraints.maxWidth,
+                child: content,
+              ),
             );
           },
         ),
