@@ -105,7 +105,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
       if (result.action == _EditorAction.save) {
         final index = _notes.indexWhere((item) => item.id == note.id);
         if (index != -1) {
-          _notes[index] = note.copyWith(
+          _notes[index] = _notes[index].copyWith(
             title: result.title,
             ticker: result.ticker,
             content: result.content,
