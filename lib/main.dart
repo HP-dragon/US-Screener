@@ -203,6 +203,7 @@ class ScreenerScreen extends StatelessWidget {
                     ],
                   )
                 : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       sections[0],
                       const SizedBox(height: 16),
