@@ -72,7 +72,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
     }
 
     setState(() {
-      final now = widget.nowProvider();
+      final now = widget.nowProvider().toUtc();
       _notes.add(
         StockNote(
           id: 'local-${now.microsecondsSinceEpoch}-${_nextLocalId++}',
@@ -109,7 +109,7 @@ class _NotesHomeScreenState extends State<NotesHomeScreen> {
             title: result.title,
             ticker: result.ticker,
             content: result.content,
-            updatedAt: widget.nowProvider(),
+            updatedAt: widget.nowProvider().toUtc(),
           );
         }
       }
@@ -418,35 +418,37 @@ class _EditorResult {
 enum _EditorAction { save, delete }
 
 String _formatDateTime(DateTime value) {
-  final month = value.month.toString().padLeft(2, '0');
-  final day = value.day.toString().padLeft(2, '0');
-  final hour = value.hour.toString().padLeft(2, '0');
-  final minute = value.minute.toString().padLeft(2, '0');
+  final normalized = value.toUtc();
+  final month = normalized.month.toString().padLeft(2, '0');
+  final day = normalized.day.toString().padLeft(2, '0');
+  final hour = normalized.hour.toString().padLeft(2, '0');
+  final minute = normalized.minute.toString().padLeft(2, '0');
   return '$month/$day ${hour}:$minute';
 }
 
 List<StockNote> _sampleNotes(DateTime now) {
+  final normalizedNow = now.toUtc();
   return [
     StockNote(
       id: 'aapl',
       title: 'AAPL pullback watch',
       ticker: 'AAPL',
       content: 'Monitor support around 20-day MA and watch iPhone demand signals.',
-      updatedAt: now.subtract(const Duration(hours: 2)),
+      updatedAt: normalizedNow.subtract(const Duration(hours: 2)),
     ),
     StockNote(
       id: 'nvda',
       title: 'NVDA earnings setup',
       ticker: 'NVDA',
       content: 'Track data center guidance and margin commentary before adding size.',
-      updatedAt: now.subtract(const Duration(hours: 5)),
+      updatedAt: normalizedNow.subtract(const Duration(hours: 5)),
     ),
     StockNote(
       id: 'msft',
       title: 'MSFT cloud momentum',
       ticker: 'MSFT',
       content: 'Validate Azure growth trend and AI monetization updates from management.',
-      updatedAt: now.subtract(const Duration(days: 1)),
+      updatedAt: normalizedNow.subtract(const Duration(days: 1)),
     ),
   ];
 }
