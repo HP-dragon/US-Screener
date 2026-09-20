@@ -420,7 +420,7 @@ class _EditorResult {
 enum _EditorAction { save, delete }
 
 String _formatDateTime(DateTime value) {
-  final normalized = value.toUtc();
+  final normalized = value.toLocal();
   final month = normalized.month.toString().padLeft(2, '0');
   final day = normalized.day.toString().padLeft(2, '0');
   final hour = normalized.hour.toString().padLeft(2, '0');
