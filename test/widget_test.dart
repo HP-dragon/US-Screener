@@ -16,7 +16,12 @@ void main() {
 
     expect(find.text('Screener'), findsOneWidget);
 
-    await tester.tap(find.text('Screener').last);
+    final screenerMenuItem = find.widgetWithText(
+      PopupMenuItem<MainMenuAction>,
+      'Screener',
+    );
+
+    await tester.tap(screenerMenuItem);
     await tester.pumpAndSettle();
 
     expect(find.text('Daftar notes saham US'), findsOneWidget);
