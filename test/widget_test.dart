@@ -40,5 +40,11 @@ void main() {
 
     expect(find.text('NVDA earnings setup'), findsOneWidget);
     expect(find.text('AAPL pullback watch'), findsNothing);
+
+    await tester.enterText(find.byKey(const Key('searchField')), 'azure');
+    await tester.pumpAndSettle();
+
+    expect(find.text('MSFT cloud momentum'), findsOneWidget);
+    expect(find.text('NVDA earnings setup'), findsNothing);
   });
 }
