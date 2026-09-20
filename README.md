@@ -1,10 +1,10 @@
 # US Screener
 
-A Flutter app prototype for managing recruitment/screening workflows.
+A Flutter app prototype for stock screener notes with a simple landing screen and expandable main menu navigation.
 
 ## Project goal
 
-This project is a starting point for an app that can be expanded into a complete recruiter or applicant screening tool compatible with web, Android, Windows, and later iOS.
+This project is a starting point for an app that can be expanded into a US stock screener and notes workflow compatible with web, Android, Windows, and later iOS.
 
 ## Run locally
 

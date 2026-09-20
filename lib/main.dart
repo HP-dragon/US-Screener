@@ -4,6 +4,13 @@ void main() {
   runApp(const UScreenerApp());
 }
 
+final class AppRoutes {
+  static const String home = '/';
+  static const String screener = '/screener';
+
+  const AppRoutes._();
+}
+
 class UScreenerApp extends StatelessWidget {
   const UScreenerApp({super.key});
 
@@ -16,289 +23,255 @@ class UScreenerApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
         useMaterial3: true,
       ),
-      home: const HomeScreen(),
+      initialRoute: AppRoutes.home,
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case AppRoutes.home:
+            return MaterialPageRoute<void>(
+              builder: (_) => const LandingScreen(),
+              settings: settings,
+            );
+          case AppRoutes.screener:
+            return MaterialPageRoute<void>(
+              builder: (_) => const ScreenerScreen(),
+              settings: settings,
+            );
+          default:
+            return MaterialPageRoute<void>(
+              builder: (_) => const LandingScreen(),
+              settings: settings,
+            );
+        }
+      },
     );
   }
 }
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+enum MainMenuAction { screener }
+
+class LandingScreen extends StatelessWidget {
+  const LandingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final metrics = [
-      _MetricCard(label: 'Applicants', value: '1,284', color: Colors.indigo),
-      _MetricCard(label: 'Shortlisted', value: '412', color: Colors.green),
-      _MetricCard(label: 'Interview', value: '118', color: Colors.orange),
-      _MetricCard(label: 'Hired', value: '36', color: Colors.teal),
-    ];
-
-    final actions = [
-      _ActionButton(icon: Icons.list_alt_rounded, label: 'Applicants'),
-      _ActionButton(icon: Icons.filter_alt_rounded, label: 'Filters'),
-      _ActionButton(icon: Icons.analytics_rounded, label: 'Reports'),
-      _ActionButton(icon: Icons.settings_rounded, label: 'Settings'),
-    ];
-
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
       appBar: AppBar(
         title: const Text('US Screener'),
-        centerTitle: false,
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_none_rounded),
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: PopupMenuButton<MainMenuAction>(
+              tooltip: 'Menu Utama',
+              onSelected: (value) {
+                switch (value) {
+                  case MainMenuAction.screener:
+                    Navigator.of(context).pushNamed(AppRoutes.screener);
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem<MainMenuAction>(
+                  value: MainMenuAction.screener,
+                  child: Text('Screener'),
+                ),
+              ],
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.secondaryContainer,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.menu_rounded,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.onSecondaryContainer,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Menu Utama',
+                      style: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSecondaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ],
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
+      body: const SafeArea(
+        child: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.space_dashboard_outlined, size: 56),
+                SizedBox(height: 16),
+                Text(
+                  'Pilih menu untuk membuka modul aplikasi.',
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class ScreenerScreen extends StatelessWidget {
+  const ScreenerScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final sections = [
+      const _SurfaceCard(
+        title: 'Daftar notes saham US',
+        child: Column(
           children: [
-            const Text(
-              'Recruitment overview',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
+            _WatchlistTile(
+              ticker: 'AAPL',
+              title: 'Apple watchlist',
+              subtitle: 'Catatan valuasi dan momentum harga.',
+            ),
+            Divider(height: 1),
+            _WatchlistTile(
+              ticker: 'MSFT',
+              title: 'Microsoft follow-up',
+              subtitle: 'Pantau cloud growth dan margin operasional.',
+            ),
+            Divider(height: 1),
+            _WatchlistTile(
+              ticker: 'NVDA',
+              title: 'NVIDIA setup',
+              subtitle: 'Rangkuman AI demand dan level entry.',
+            ),
+          ],
+        ),
+      ),
+      const _SurfaceCard(
+        title: 'Editor note',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Judul note',
+                border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Track applicant quality, review progress, and manage screening tasks.',
-              style: TextStyle(
-                fontSize: 15,
-                color: Colors.grey.shade700,
-              ),
-            ),
-            const SizedBox(height: 20),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 2,
-              mainAxisSpacing: 16,
-              crossAxisSpacing: 16,
-              childAspectRatio: 1.45,
-              children: metrics,
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Quick actions',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: 4,
-              mainAxisSpacing: 12,
-              crossAxisSpacing: 12,
-              children: actions,
-            ),
-            const SizedBox(height: 24),
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text(
-                        'Recent applicants',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        'View all',
-                        style: TextStyle(
-                          color: Colors.indigo,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  _ApplicantRow(name: 'Alya N.', role: 'Product Designer', stage: 'Interview'),
-                  const Divider(),
-                  _ApplicantRow(name: 'Rian H.', role: 'Frontend Engineer', stage: 'Shortlist'),
-                  const Divider(),
-                  _ApplicantRow(name: 'Sita M.', role: 'QA Analyst', stage: 'Applied'),
-                ],
+            SizedBox(height: 12),
+            TextField(
+              minLines: 8,
+              maxLines: 12,
+              decoration: InputDecoration(
+                labelText: 'Isi analisis',
+                alignLabelWithHint: true,
+                border: OutlineInputBorder(),
+                hintText:
+                    'Tulis ide, risiko, level harga, atau checklist analisis di sini.',
               ),
             ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {},
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('New review'),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Screener'),
+      ),
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final wideLayout = constraints.maxWidth >= 900;
+            final content = wideLayout
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: sections[0]),
+                      const SizedBox(width: 16),
+                      Expanded(child: sections[1]),
+                    ],
+                  )
+                : Column(
+                    children: [
+                      sections[0],
+                      const SizedBox(height: 16),
+                      sections[1],
+                    ],
+                  );
+
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: content,
+            );
+          },
+        ),
       ),
     );
   }
 }
 
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.label,
-    required this.value,
-    required this.color,
+class _SurfaceCard extends StatelessWidget {
+  const _SurfaceCard({
+    required this.title,
+    required this.child,
   });
 
-  final String label;
-  final String value;
-  final Color color;
+  final String title;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.insights_rounded, color: color),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium,
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
       ),
     );
   }
 }
 
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.icon,
-    required this.label,
+class _WatchlistTile extends StatelessWidget {
+  const _WatchlistTile({
+    required this.ticker,
+    required this.title,
+    required this.subtitle,
   });
 
-  final IconData icon;
-  final String label;
+  final String ticker;
+  final String title;
+  final String subtitle;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+        child: Text(ticker),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: Colors.indigo),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ApplicantRow extends StatelessWidget {
-  const _ApplicantRow({
-    required this.name,
-    required this.role,
-    required this.stage,
-  });
-
-  final String name;
-  final String role;
-  final String stage;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 22,
-            backgroundColor: Colors.indigo.shade100,
-            child: Text(
-              name.split(' ').map((part) => part[0]).take(2).join(),
-              style: const TextStyle(
-                color: Colors.indigo,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  role,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.green.withOpacity(0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              stage,
-              style: const TextStyle(
-                color: Colors.green,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.chevron_right_rounded),
     );
   }
 }
