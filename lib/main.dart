@@ -38,7 +38,7 @@ class UScreenerApp extends StatelessWidget {
             );
           default:
             return MaterialPageRoute<void>(
-              builder: (_) => const LandingScreen(),
+              builder: (_) => UnknownRouteScreen(routeName: settings.name),
               settings: settings,
             );
         }
@@ -215,6 +215,35 @@ class ScreenerScreen extends StatelessWidget {
               child: content,
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class UnknownRouteScreen extends StatelessWidget {
+  const UnknownRouteScreen({
+    super.key,
+    this.routeName,
+  });
+
+  final String? routeName;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = routeName ?? 'tanpa nama';
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Halaman tidak ditemukan'),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(
+            'Route "$label" belum tersedia.',
+            textAlign: TextAlign.center,
+          ),
         ),
       ),
     );
